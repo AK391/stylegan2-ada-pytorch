@@ -195,6 +195,9 @@ def open_mnist(images_gz: str, *, max_images: Optional[int]):
     return max_idx, iterate_images()
 
 #----------------------------------------------------------------------------
+def isLeftEdgeBlank(image):
+    return image[:, -1].sum(axis=0) > image[:, 0].sum(axis=0) 
+#----------------------------------------------------------------------------
 
 def make_transform(
     transform: Optional[str],
@@ -204,15 +207,23 @@ def make_transform(
 ) -> Callable[[np.ndarray], Optional[np.ndarray]]:
     resample = { 'box': PIL.Image.BOX, 'lanczos': PIL.Image.LANCZOS }[resize_filter]
     def scale(width, height, img):
-        w = img.shape[1]
         h = img.shape[0]
-        if width == w and height == h:
-            return img
-        img = PIL.Image.fromarray(img)
-        ww = width if width is not None else w
-        hh = height if height is not None else h
-        img = img.resize((ww, hh), resample)
-        return np.array(img)
+        w = img.shape[1]
+        if h > w:
+            padding = (h - w)
+            if isLeftEdgeBlank(img):
+                # pad left
+                padded_image = np.pad(img, ((0, 0), (padding, 0)), 'constant', constant_values=(0, 0))
+            else:
+                # pad right
+                padded_image = np.pad(img, ((0, 0), (0, padding)), 'constant', constant_values=(0, 0))
+            img = PIL.Image.fromarray(padded_image)
+            ww = width if width is not None else w
+            hh = height if height is not None else h
+            img = img.resize((ww, hh), resample = {'box': PIL.Image.BOX, 'lanczos': PIL.Image.LANCZOS}['lanczos'])
+            return np.array(img)
+        else:
+            print("Not supported")
 
     def center_crop(width, height, img):
         crop = np.min(img.shape[:2])
