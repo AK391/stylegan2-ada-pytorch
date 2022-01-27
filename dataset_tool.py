@@ -211,12 +211,12 @@ def make_transform(
         w = img.shape[1]
         if h > w:
             padding = (h - w)
-            if isLeftEdgeBlank(img):
+            if isLeftEdgeBlank(img).all():
                 # pad left
-                padded_image = np.pad(img, ((0, 0), (padding, 0)), 'constant', constant_values=(0, 0))
+                padded_image = np.pad(img, ((0, 0), (padding, 0), (0,0)), 'constant', constant_values=(0, 0))
             else:
                 # pad right
-                padded_image = np.pad(img, ((0, 0), (0, padding)), 'constant', constant_values=(0, 0))
+                padded_image = np.pad(img, ((0, 0), (0, padding), (0, 0)), 'constant', constant_values=(0, 0))
             img = PIL.Image.fromarray(padded_image)
             ww = width if width is not None else w
             hh = height if height is not None else h
